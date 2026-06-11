@@ -1,31 +1,41 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
-class User(models.Model):
-    role_choices = [
-        ('admin', 'Admin'),
-        ('user', 'User'),
-        ('warehouse_worker', 'Warehouse Worker'),
-        ('seller', 'Seller'),
-    ]
 
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    role = models.CharField(max_length=50, choices=role_choices)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    password = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
-    
-    # Required for custom user models
-    REQUIRED_FIELDS = []
-    USERNAME_FIELD = 'email'
-    
-    # Auth properties
-    is_anonymous = False
-    is_authenticated = True
+ADMIN, CLIENT, SELLER, WAREHOUSE_WORKER =('admin', 'client', 'seller', 'warehouse_worker')
+
+
+class User(AbstractUser):
+
+    USER_ROLES1 =(
+         (ADMIN,ADMIN),
+         (CLIENT,CLIENT),
+         (SELLER,SELLER),
+         (WAREHOUSE_WORKER,WAREHOUSE_WORKER)
+
+     )
+
+    user_roles = models.CharField(max_length=20, choices=USER_ROLES1, default=CLIENT)
+    phone = models.CharField(max_length=30, blank=True, null=True)
+    photo = models.ImageField(
+        upload_to="user_photos/",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["jpeg", "jpg", "heic", "heif", "png"])]
+    )
+
+
+
+    def token(self):
+        
+        refresh = RefreshToken.for_user(self)
+        return {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh)  
+        }
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-
+        return self.username
