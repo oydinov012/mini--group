@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from apps.shop.models import Product, Category, Brands, Whishlist, Review
+from apps.shop.models import Product, Category, Brands, Whishlist, Review, Cart,CartItem
 from api.serializer.shop_app import (
     ProductSeralizer, CategorySeralizer,
     BrandsSeralizer, WhishlistSeralizer, ReviewSerializer
@@ -145,3 +145,22 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Review.objects.filter(user=self.request.user)
+
+class CartViewSet(viewsets.ModelViewSet):
+    serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class CartItemViewSet(viewsets.ModelViewSet):
+    serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CartItem.objects.filter(
+            cart__user=self.request.user
+        )
