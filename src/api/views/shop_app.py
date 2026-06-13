@@ -15,6 +15,7 @@ class CategoryListCreateView(generics.ListCreateAPIView):
     pagination_class = CustomPagination
 
     def get_permissions(self):
+        print('categories')
         if self.request.method == 'GET':
             return [AllowAny()]
         return [IsAdminUser()]

@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from api.views.user_app import RegisterView, LogoutView, LoginView
+from api.views.user_app import RegisterView, LogoutView, LoginView ,ForgotPasswordView, PasswordResetConfirmView
 from api.views.shop_app import (
     CategoryListCreateView, CategoryDetailView,
     BrandsListCreateView, BrandsDetailView,
@@ -16,10 +16,15 @@ from api.views.order_app import (
 )
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='auth_register'),
-    path('login/', LoginView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('logout/', LogoutView.as_view(), name='auth_logout'),
+    # auth
+    path('auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('auth/login/', LoginView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/logout/', LogoutView.as_view(), name='auth_logout'),
+    path('auth/forgot-password/', ForgotPasswordView.as_view()),
+    path('auth/reset-password/', PasswordResetConfirmView.as_view()),
+
+
 
     path('categories/', CategoryListCreateView.as_view(), name='category_list_create'),
     path('categories/<int:pk>/', CategoryDetailView.as_view(), name='category_detail'),
