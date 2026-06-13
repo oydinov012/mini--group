@@ -1,4 +1,4 @@
-from apps.shop.models import Product, Category, Brands, Whishlist, Review
+from apps.shop.models import Product, Category, Brands, Whishlist, Review, Cart, CartItem
 from rest_framework.serializers import ModelSerializer
 
 class ProductSeralizer(ModelSerializer):
@@ -35,3 +35,16 @@ class ReviewSerializer(ModelSerializer):
         model = Review
         fields = '__all__'
         read_only_fields = ('user', 'is_published', 'created_at')
+
+class CartItemSerializer(ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = "__all__"
+
+
+class CartSerializer(ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = "__all__"
