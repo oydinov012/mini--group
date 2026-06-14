@@ -1,11 +1,10 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from apps.shop.models import Product, ProductImage, Category, Brands, Whishlist, Review, Cart, CartItem
+from apps.shop.models import Product, Category, Brands, Whishlist, Review, Cart,CartItem
 from api.serializer.shop_app import (
-    ProductSeralizer, ProductImageSerializer, CategorySeralizer,
-    BrandsSeralizer, WhishlistSeralizer, ReviewSerializer,
-    CartSerializer, CartItemSerializer
+    CartItemSerializer, CartSerializer, ProductSeralizer, CategorySeralizer,
+    BrandsSeralizer, WhishlistSeralizer, ReviewSerializer
 )
 from api.paginations import CustomPagination
 
@@ -16,7 +15,10 @@ class CategoryListCreateView(generics.ListCreateAPIView):
     pagination_class = CustomPagination
 
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == 'GET' else [IsAdminUser()]
+        print('categories')
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
 
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -24,7 +26,10 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySeralizer
 
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == 'GET' else [IsAdminUser()]
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
+
 
 
 class BrandsListCreateView(generics.ListCreateAPIView):
@@ -33,7 +38,9 @@ class BrandsListCreateView(generics.ListCreateAPIView):
     pagination_class = CustomPagination
 
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == 'GET' else [IsAdminUser()]
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
 
 
 class BrandsDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -41,7 +48,10 @@ class BrandsDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BrandsSeralizer
 
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == 'GET' else [IsAdminUser()]
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
+
 
 
 class ProductListCreateView(generics.ListCreateAPIView):
@@ -49,47 +59,43 @@ class ProductListCreateView(generics.ListCreateAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        qs = Product.objects.filter(is_active=True).select_related('category', 'brand').prefetch_related('images')
-        params = self.request.query_params
-        if params.get('category'):
-            qs = qs.filter(category_id=params['category'])
-        if params.get('brand'):
-            qs = qs.filter(brand_id=params['brand'])
-        if params.get('min_price'):
-            qs = qs.filter(price__gte=params['min_price'])
-        if params.get('max_price'):
-            qs = qs.filter(price__lte=params['max_price'])
-        if params.get('search'):
-            qs = qs.filter(name__icontains=params['search'])
+        qs = Product.objects.filter(is_active=True).select_related('category', 'brand')
+
+        category = self.request.query_params.get('category')
+        brand = self.request.query_params.get('brand')
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
+        search = self.request.query_params.get('search')
+
+        if category:
+            qs = qs.filter(category_id=category)
+        if brand:
+            qs = qs.filter(brand_id=brand)
+        if min_price:
+            qs = qs.filter(price__gte=min_price)
+        if max_price:
+            qs = qs.filter(price__lte=max_price)
+        if search:
+            qs = qs.filter(name__icontains=search)
+
         return qs
 
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == 'GET' else [IsAdminUser()]
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Product.objects.all().prefetch_related('images')
+    queryset = Product.objects.all()
     serializer_class = ProductSeralizer
 
     def get_permissions(self):
-        return [AllowAny()] if self.request.method == 'GET' else [IsAdminUser()]
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
 
 
-class ProductImageListCreateView(generics.ListCreateAPIView):
-    serializer_class = ProductImageSerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        return ProductImage.objects.filter(product_id=self.kwargs['product_id'])
-
-    def perform_create(self, serializer):
-        serializer.save(product_id=self.kwargs['product_id'])
-
-
-class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = ProductImage.objects.all()
-    serializer_class = ProductImageSerializer
-    permission_classes = [IsAdminUser]
 
 
 class WishlistListView(generics.ListAPIView):
@@ -116,12 +122,14 @@ class WishlistDeleteView(generics.DestroyAPIView):
         return Whishlist.objects.filter(user=self.request.user)
 
 
+
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return Review.objects.filter(product_id=self.kwargs['product_id'], is_published=True)
+        product_id = self.kwargs.get('product_id')
+        return Review.objects.filter(product_id=product_id, is_published=True)
 
 
 class ReviewCreateView(generics.CreateAPIView):
@@ -139,51 +147,21 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return Review.objects.filter(user=self.request.user)
 
-
-# ── Cart ──────────────────────────────────────────────────────────────────────
-class CartView(generics.RetrieveAPIView):
+class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
-        cart, _ = Cart.objects.get_or_create(user=self.request.user)
-        return cart
-
-
-class CartItemAddView(generics.CreateAPIView):
-    serializer_class = CartItemSerializer
-    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        cart, _ = Cart.objects.get_or_create(user=self.request.user)
-        product = serializer.validated_data['product']
-        quantity = serializer.validated_data.get('quantity', 1)
-        item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-        if not created:
-            item.quantity += quantity
-            item.save()
+        serializer.save(user=self.request.user)
 
-
-class CartItemUpdateView(generics.UpdateAPIView):
+class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CartItem.objects.filter(cart__user=self.request.user)
-
-
-class CartItemDeleteView(generics.DestroyAPIView):
-    serializer_class = CartItemSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return CartItem.objects.filter(cart__user=self.request.user)
-
-
-class CartClearView(generics.DestroyAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, *args, **kwargs):
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        cart.items.all().delete()
-        return Response({'message': 'Корзина очищена.'}, status=status.HTTP_204_NO_CONTENT)
+        return CartItem.objects.filter(
+            cart__user=self.request.user
+        )

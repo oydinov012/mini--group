@@ -29,14 +29,11 @@ class PromoCodeCheckView(APIView):
             return Response({'error': 'PromoCod korsatilmagan.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            promo = PromoCode.objects.get(code=code)
-            if not promo.is_valid():
-                return Response({'valid': False, 'error': 'PromoCod ishlamiyapti yoki limit tugagan.'}, status=status.HTTP_400_BAD_REQUEST)
+            promo = PromoCode.objects.get(code=code, is_active=True)
             return Response({
                 'valid': True,
                 'code': promo.code,
                 'discount_value': promo.discount_value,
-                'remaining_uses': promo.max_use - promo.used_count,
             })
         except PromoCode.DoesNotExist:
             return Response({'valid': False, 'error': 'PromoCod ishlamiyapti.'}, status=status.HTTP_404_NOT_FOUND)
@@ -56,13 +53,7 @@ class OrderListCreateView(generics.ListCreateAPIView):
         return Order.objects.filter(user=user).select_related('promo_code')
 
     def perform_create(self, serializer):
-        promo = serializer.validated_data.get('promo_code')
-        if promo and not promo.is_valid():
-            from rest_framework.exceptions import ValidationError
-            raise ValidationError({'promo_code': 'Этот промокод недействителен или исчерпал лимит использований.'})
-        order = serializer.save(user=self.request.user)
-        if promo:
-            promo.increment_use()
+        serializer.save(user=self.request.user)
 
 
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
