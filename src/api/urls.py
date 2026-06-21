@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path , include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from api.views.user_app import RegisterView, LogoutView, LoginView ,ForgotPasswordView, PasswordResetConfirmView
@@ -14,6 +15,15 @@ from api.views.order_app import (
     OrderListCreateView, OrderDetailView, OrderStatusUpdateView,
     OrderItemListCreateView, OrderItemDetailView,
 )
+
+
+
+from api.views.news_app import NewsView, NewsTypeView
+
+r = DefaultRouter()
+r.register(r'news-type', NewsTypeView, basename='news-type')
+r.register(r'news', NewsView, basename='news')
+
 
 urlpatterns = [
     # auth
@@ -53,4 +63,5 @@ urlpatterns = [
 
     path('orders/<int:order_id>/items/', OrderItemListCreateView.as_view(), name='orderitem_list_create'),
     path('order-items/<int:pk>/', OrderItemDetailView.as_view(), name='orderitem_detail'),
+    path('news/',include(r.urls)),
 ]
