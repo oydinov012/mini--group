@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'apps.utils',
     'apps.shop',
     'apps.order',
+    'apps.news',
 
     'rest_framework',
     'rest_framework_simplejwt',
