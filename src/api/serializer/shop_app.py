@@ -1,4 +1,4 @@
-from apps.shop.models import Product, Category, Brands, Whishlist, Review, Cart, CartItem
+from apps.shop.models import Product, Category, Brands, Whishlist, Review, Cart, CartItem, ProductImage
 from rest_framework.serializers import ModelSerializer
 
 class ProductSeralizer(ModelSerializer):
@@ -26,6 +26,13 @@ class WhishlistSeralizer(ModelSerializer):
 
     class Meta:
         model = Whishlist
+        fields = '__all__'
+
+
+class ProductImageSerializer(ModelSerializer):
+
+    class Meta:
+        model = ProductImage
         fields = '__all__'
 
 
