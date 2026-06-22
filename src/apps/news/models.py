@@ -2,6 +2,9 @@ from django.db import models
 
 class NewsType(models.Model):
     name = models.CharField(max_length=200, verbose_name='newsType')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
     def __str__(self):
@@ -11,10 +14,13 @@ class NewsType(models.Model):
 
 
 class News(models.Model):
-    news_type = models.ForeignKey(to=NewsType, on_delete=models.CASCADE, related_name='news_type')
+    news_type = models.ForeignKey(NewsType, on_delete=models.SET_NULL, null=True, blank=True, related_name='news')
     title = models.CharField(max_length=255)
-    content = models.TextField()
+    description = models.TextField(blank=True, null=True)
+    cover_image = models.ImageField(upload_to='news_covers/', blank=True, null=True)
+    is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
     def __str__(self):
@@ -22,12 +28,16 @@ class News(models.Model):
     
 
 class NewsImage(models.Model):
-    news = models.ForeignKey(to=News, on_delete=models.CASCADE)
+    news = models.ForeignKey(News, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='news_images/')
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.news.title
+        return f"Image for {self.news.title}"
 
+    class Meta:
+        verbose_name = 'News Image'
+        verbose_name_plural = 'News Images'
     
     
 
