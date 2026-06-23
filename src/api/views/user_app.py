@@ -71,8 +71,9 @@ class ForgotPasswordView(APIView):
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
-        # Frontend saytingiz linki (foydalanuvchi shu linkka bosib saytga o'tadi)
-        reset_link = f"http://localhost:3000/reset-password/{uidb64}/{token}/"
+        # Frontend URL — .env dagi FRONTEND_URL dan olinadi
+        frontend_url = env("FRONTEND_URL", default="http://localhost:3000")
+        reset_link = f"{frontend_url}/reset-password/{uidb64}/{token}/"
 
         # Xat mazmuni
         subject = "Parolni tiklash so'rovi"

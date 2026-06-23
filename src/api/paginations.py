@@ -11,7 +11,7 @@ class CustomPagination(PageNumberPagination):
         return Response({
                "count" : self.page.paginator.count,
                "next" : self.get_next_link(),
-               "previos" : self.get_previous_link(),
+               "previous" : self.get_previous_link(),
                "results"  :data
             }
         )

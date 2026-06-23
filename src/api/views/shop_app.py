@@ -1,10 +1,10 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from apps.shop.models import Product, ProductImage, Category, Brands, Whishlist, Review, Cart, CartItem
+from apps.shop.models import Product, ProductImage, Category, Brands, Wishlist, Review, Cart, CartItem
 from api.serializer.shop_app import (
     ProductSeralizer, ProductImageSerializer, CategorySeralizer,
-    BrandsSeralizer, WhishlistSeralizer, ReviewSerializer,
+    BrandsSeralizer, WishlistSeralizer, ReviewSerializer,
     CartSerializer, CartItemSerializer
 )
 from api.paginations import CustomPagination
@@ -93,7 +93,7 @@ class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class WishlistListView(generics.ListAPIView):
-    serializer_class = WhishlistSeralizer
+    serializer_class = WishlistSeralizer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -101,7 +101,7 @@ class WishlistListView(generics.ListAPIView):
 
 
 class WishlistAddView(generics.CreateAPIView):
-    serializer_class = WhishlistSeralizer
+    serializer_class = WishlistSeralizer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
@@ -109,7 +109,7 @@ class WishlistAddView(generics.CreateAPIView):
 
 
 class WishlistDeleteView(generics.DestroyAPIView):
-    serializer_class = WhishlistSeralizer
+    serializer_class = WishlistSeralizer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
