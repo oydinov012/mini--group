@@ -1,6 +1,10 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+
 
 User = get_user_model()
 
@@ -37,18 +41,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "username": self.user.username,
             "email": self.user.email,
             "phone": self.user.phone,
-            "photo": self.user.photo.url if self.user.photo else None
+            "photo": self.user.photo.url if self.user.photo else None,
+            'user_roles': self.user.user_roles,
         }
         return data
     
-
-
-from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
-
 User = get_user_model()
 
 class ForgotPasswordSerializer(serializers.Serializer):
@@ -67,13 +64,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         try:
-            # uidb64 dan foydalanuvchi ID sini qayta tiklaymiz
             uid = force_str(urlsafe_base64_decode(attrs['uidb64']))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             raise serializers.ValidationError({"token": "Yaroqsiz havola yoki foydalanuvchi topilmadi."})
 
-        # Token xavfsizligini va muddati o'tmaganini tekshiramiz
+
         if not default_token_generator.check_token(user, attrs['token']):
             raise serializers.ValidationError({"token": "Token yaroqsiz yoki muddati o'tgan."})
 
@@ -82,11 +78,38 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     def save(self):
         user = self.validated_data['user']
-        # Yangi parolni xavfsiz (hash) ko'rinishda saqlaymiz
         user.set_password(self.validated_data['new_password'])
         user.save()
         return user
     
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'phone', 'photo', 'first_name', 'last_name', 'user_roles')
+        read_only_fields = ('id', 'user_roles')
+
+
+class UpdatePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=6)
+    confirm_password = serializers.CharField(write_only=True, min_length=6)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': "Yangi parollar mos kelmadi."})
+        return attrs
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Joriy parol noto'g'ri.")
+        return value
+
+    def save(self):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
 
 
 

@@ -102,3 +102,51 @@ class ProductImage(models.Model):
     class Meta:
         verbose_name = 'Product Image'
         verbose_name_plural = 'Product Images'
+
+class Sale(models.Model):
+    DISCOUNT_TYPE = (
+        ('percentage', 'Foiz (%)'),
+        ('fixed', 'Aniq summa'),
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='sales')
+    title = models.CharField(max_length=255)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE, default='percentage')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} — {self.product.name}"
+
+    @property
+    def discounted_price(self):
+        if self.discount_type == 'percentage':
+            return round(self.product.price * (1 - self.discount_value / 100), 2)
+        return max(self.product.price - self.discount_value, 0)
+
+
+class DeliveryAddress(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='addresses')
+    full_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=30)
+    city = models.CharField(max_length=100)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    street = models.CharField(max_length=255)
+    house = models.CharField(max_length=50, blank=True, null=True)
+    zip_code = models.CharField(max_length=20, blank=True, null=True)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_default', '-created_at']
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            DeliveryAddress.objects.filter(user=self.user, is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.full_name} — {self.city}, {self.street}"
