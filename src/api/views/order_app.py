@@ -74,7 +74,7 @@ class OrderStatusUpdateView(generics.UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         order = self.get_object()
         new_status = request.data.get('status')
-        if new_status not in dict(Order.status_choices):
+        if new_status not in dict(Order.STATUS_CHOICES):
             return Response({'error': 'Notogri status.'}, status=status.HTTP_400_BAD_REQUEST)
         order.status = new_status
         order.save()

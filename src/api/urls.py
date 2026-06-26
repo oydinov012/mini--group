@@ -24,7 +24,12 @@ from api.views.order_app import (
     OrderListCreateView, OrderDetailView, OrderStatusUpdateView,
     OrderItemListCreateView, OrderItemDetailView,
 )
-from api.views.news_app import NewsView, NewsTypeView
+from api.views.news_app import (
+    NewsView, NewsTypeView,
+    NewsAdminListCreateView, NewsAdminDetailView,
+    NewsTypeAdminListCreateView, NewsTypeAdminDetailView,
+    NewsImageAdminListCreateView, NewsImageAdminDetailView,
+)
 
 r = DefaultRouter()
 r.register(r'news-type', NewsTypeView, basename='news-type')
@@ -102,4 +107,12 @@ urlpatterns = [
 
     # ── News ──────────────────────────────────────────────────────────────────
     path('news/', include(r.urls)),
+
+    # ── News Admin CRUD ───────────────────────────────────────────────────────
+    path('admin/news/', NewsAdminListCreateView.as_view(), name='admin_news_list_create'),
+    path('admin/news/<int:pk>/', NewsAdminDetailView.as_view(), name='admin_news_detail'),
+    path('admin/news-types/', NewsTypeAdminListCreateView.as_view(), name='admin_newstype_list_create'),
+    path('admin/news-types/<int:pk>/', NewsTypeAdminDetailView.as_view(), name='admin_newstype_detail'),
+    path('admin/news/<int:news_id>/images/', NewsImageAdminListCreateView.as_view(), name='admin_newsimage_list_create'),
+    path('admin/news-images/<int:pk>/', NewsImageAdminDetailView.as_view(), name='admin_newsimage_detail'),
 ]
