@@ -256,14 +256,19 @@ class CartItemAddView(generics.CreateAPIView):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        cart, _ = Cart.objects.get_or_create(user=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        cart, _ = Cart.objects.get_or_create(user=request.user)
         product = serializer.validated_data['product']
         quantity = serializer.validated_data.get('quantity', 1)
         item, created = CartItem.objects.get_or_create(cart=cart, product=product)
         if not created:
             item.quantity += quantity
             item.save()
+        out = CartItemSerializer(item, context={'request': request})
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(out.data, status=status_code)
 
 
 class CartItemUpdateView(generics.UpdateAPIView):
@@ -349,10 +354,6 @@ class DeliveryAddressSetDefaultView(APIView):
 
 
 class HomePageView(APIView):
-    """
-    GET /api/v1/home/
-    Top 10: categories, news, popular products, best-sellers
-    """
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -360,20 +361,16 @@ class HomePageView(APIView):
         from apps.order.models import OrderItem
         from api.serializer.news_app import NewsSerializer
 
-        # Top 10 kategoriyalar (eng ko'p mahsulot bor)
         categories = Category.objects.filter(is_active=True).annotate(
             product_count=Count('products')
         ).order_by('-product_count')[:10]
 
-        # So'nggi 10 ta yangilik
         news = News.objects.filter(is_published=True).order_by('-created_at')[:10]
 
-        # Eng mashhur (wishlistga eng ko'p qo'shilgan) 10 ta mahsulot
         popular = Product.objects.filter(is_active=True).annotate(
             wish_count=Count('wishlists')
         ).order_by('-wish_count')[:10]
 
-        # Eng ko'p sotilgan 10 ta mahsulot (order items dan)
         from django.db.models import Sum
         best_seller_ids = (
             OrderItem.objects
@@ -382,12 +379,10 @@ class HomePageView(APIView):
             .order_by('-total_sold')
             .values_list('product_id', flat=True)[:10]
         )
-        # IDlar tartibini saqlab query
         best_sellers_qs = Product.objects.filter(id__in=best_seller_ids, is_active=True)
         best_sellers_map = {p.id: p for p in best_sellers_qs}
         best_sellers = [best_sellers_map[pk] for pk in best_seller_ids if pk in best_sellers_map]
 
-        # Aktiv aksiyalar
         now = timezone.now()
         sales = Sale.objects.filter(
             is_active=True, start_date__lte=now, end_date__gte=now
