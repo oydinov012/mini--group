@@ -50,6 +50,11 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
 
+# O'zingizning serializerlaringiz yo'lini yozing
+# from api.serializer.user_app import ForgotPasswordSerializer, PasswordResetConfirmSerializer
+
+# User = get_user_model()
+
 class ForgotPasswordView(APIView):
     permission_classes = (AllowAny,)
 
@@ -61,9 +66,20 @@ class ForgotPasswordView(APIView):
 
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        frontend_url = env('FRONTEND_URL', default='http://localhost:3000')
-        reset_link = f'{frontend_url}/reset-password/{uidb64}/{token}/'
 
+        # Frontend saytingiz linki (foydalanuvchi shu linkka bosib saytga o'tadi)
+        reset_link = f"http://localhost:3000/reset-password/{uidb64}/{token}/"
+
+        # Xat mazmuni
+        subject = "Parolni tiklash so'rovi"
+        message = (
+            f"Assalomu alaykum, {user.username}!\n\n"
+            f"Shop.uz loyihasidagi profilingiz parolini tiklash uchun quyidagi havolaga o'ting:\n"
+            f"{reset_link}\n\n"
+            f"Agar bu so'rovni siz yubormagan bo'lsangiz, ushbu xatni e'tiborsiz qoldiring."
+        )
+        
+        # SMTP orqali real emailga xat yuborish
         send_mail(
             subject="Parolni tiklash so'rovi",
             message=(
