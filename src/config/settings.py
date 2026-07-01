@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
     'apps.users',
     'apps.utils',
     'apps.shop',
@@ -115,8 +116,19 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+
+# Hujjatning sarlavhasi va tavsiflarini sozlash
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Sizning API Loyihangiz',
+    'DESCRIPTION': 'Loyiha uchun barcha API endpointlar dokumentatsiyasi',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Agar JWT ishlatsangiz, uni hujjatda ko'rsatish uchun:
+    'COMPONENT_SPLIT_REQUEST': True,
+}
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
